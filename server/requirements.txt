@@ -7,8 +7,9 @@ python-multipart  # for file uploads
 langchain
 langchain-community
 langchain-core
+langchain-text-splitters
 langchain-groq
-
+langchain-google-genai
 # Vectorstore
 # chromadb
 pinecone
