@@ -2,7 +2,6 @@
 
 A Retrieval-Augmented Generation (RAG) chatbot that answers medical questions grounded in documents you upload — PDFs, textbooks, clinical notes, or reports. Instead of relying on the LLM's raw memory (and risking hallucinated medical facts), the system retrieves the most relevant chunks from your own documents first, then generates an answer strictly from that context.
 
-📄 **Architecture reference:** [MedicalAssistant.pdf](./assets/MedicalAssistant.pdf)
 
 ---
 
