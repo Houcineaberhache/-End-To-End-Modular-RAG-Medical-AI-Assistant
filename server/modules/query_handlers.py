@@ -6,7 +6,10 @@ def query_chain(chain, user_input: str):
         result = chain.invoke(user_input)
         response = {
             "response": result["result"],
-            "sources": [doc.metadata.get("sources", "") for doc in result["source_documents"]]
+            "sources": [
+                f"{doc.metadata.get('source', 'unknown')} (page {doc.metadata.get('page', '?')})"
+                for doc in result["source_documents"]
+            ]
         }
         logger.debug(f"Chain response:{response}")
         return response

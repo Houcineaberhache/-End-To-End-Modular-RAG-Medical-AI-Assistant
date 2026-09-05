@@ -30,16 +30,19 @@ async def ask_question(question: str = Form(...)):
         # Embed model + Pinecone setup
         pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
         index = pc.Index(os.environ["PINECONE_INDEX_NAME"])
-        embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        embed_model = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001",
+            output_dimensionality=768
+        )
 
         embedded_query = embed_model.embed_query(question)
         res = index.query(vector=embedded_query, top_k=3, include_metadata=True)
 
         docs = [
-            Document(
-                page_content=match["metadata"].get("text", ""),
-                metadata=match["metadata"]
-            )
+        Document(
+            page_content=match["metadata"].get("text", ""),
+            metadata=match["metadata"]
+        )
             for match in res["matches"]
         ]
 
