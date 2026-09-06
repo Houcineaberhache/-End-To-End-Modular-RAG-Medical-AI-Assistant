@@ -116,7 +116,7 @@ The API will be live at `http://127.0.0.1:8000`. Interactive docs available at `
 
 ### 5. Run the frontend
 
-The frontend is a single static HTML file with no build step.
+The primary interface is a single static HTML file with no build step.
 
 ```bash
 cd client
@@ -124,6 +124,8 @@ python -m http.server 5500
 ```
 
 Then open `http://localhost:5500/index.html` in your browser.
+
+> A legacy Streamlit interface (`app.py` and `components/`) is also included in the repo but is not the deployed version.
 
 ---
 
@@ -153,8 +155,18 @@ Ask a question grounded in the uploaded documents.
 
 ```
 ├── assets/                    # Architecture diagrams and sample PDFs
-├── client/                    # Frontend chat interface
-│   └── index.html              # Standalone HTML/CSS/JS chat UI
+├── client/
+│   ├── components/
+│   │   ├── chatUI.py           # Streamlit chat component (legacy interface)
+│   │   ├── history_download.py # Chat history export
+│   │   └── upload.py           # Streamlit PDF upload sidebar
+│   ├── utils/
+│   │   └── api.py              # Shared API client for the Streamlit app
+│   ├── app.py                  # Streamlit entry point (legacy interface)
+│   ├── config.py                # API base URL config
+│   ├── style.py                 # Custom CSS for the Streamlit interface
+│   ├── index.html               # Standalone HTML/CSS/JS chat UI (primary, deployed interface)
+│   └── requirements.txt
 └── server/                    # FastAPI backend
     ├── middlewares/
     │   └── exception_handlers.py
@@ -166,7 +178,6 @@ Ask a question grounded in the uploaded documents.
     ├── routes/
     │   ├── ask_question.py
     │   └── upload_pdfs.py
-    ├── Dockerfile
     ├── logger.py
     ├── main.py
     └── requirements.txt
@@ -202,4 +213,4 @@ This project is a **learning/portfolio application** and is **not intended for r
 ## 👤 Author
 
 Built by **Houcine** as part of a hands-on AI/RAG engineering portfolio.
-Follow the build process: **[@__houcine.ai]((https://www.instagram.com/__houcine.ai/))** — *Decode Data*
+Follow the build process: **[@__houcine.ai]([https://www.instagram.com/__houcine.ai/])** — *Decode Data*
