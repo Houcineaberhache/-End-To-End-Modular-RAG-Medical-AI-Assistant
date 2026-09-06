@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> 🩺 MediBot — AI Medical Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #131314;
+    --sidebar-bg: #1a1b1c;
+    --surface: #1e1f20;
+    --surface-hover: #26282a;
+    --border: #2c2d2f;
+    --text: #e3e3e3;
+    --text-muted: #9aa0a6;
+    --accent: #4d6bfe;
+    --accent-hover: #3d5aef;
+    --user-bubble: #26282a;
+    --radius-lg: 24px;
+    --radius-md: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+  }
+
+  .app {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 260px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    flex-shrink: 0;
+    transition: width 0.2s ease, padding 0.2s ease;
+  }
+
+  .sidebar.collapsed {
+    width: 68px;
+    padding: 16px 10px;
+  }
+
+  .sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .brand .dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #7b9bff);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .sidebar.collapsed .brand span.label { display: none; }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    padding: 8px 10px 6px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .sidebar.collapsed .section-label { opacity: 0; height: 0; padding: 0; margin: 0; }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    transition: border-color 0.15s, background 0.15s;
+    margin: 0 4px 10px 4px;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(77,107,254,0.06); }
+  .sidebar.collapsed .upload-zone { display: none; }
+
+  .file-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 4px 4px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    gap: 6px;
+  }
+  .file-chip span.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar.collapsed .file-chip { display: none; }
+
+  .index-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 6px 4px 4px 4px;
+    transition: background 0.15s;
+  }
+  .index-btn:hover { background: var(--accent-hover); }
+  .index-btn:disabled { background: var(--surface-hover); color: var(--text-muted); cursor: not-allowed; }
+  .sidebar.collapsed .index-btn { display: none; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 10px 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .sidebar.collapsed .sidebar-footer { opacity: 0; }
+
+  /* ---------- Main chat area ---------- */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .top-bar .status {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status .pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34c759;
+    display: inline-block;
+  }
+
+  .chat-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 32px 24px 12px 24px;
+  }
+
+  .chat-column {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ---------- Empty state ---------- */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    gap: 8px;
+  }
+  .empty .greeting {
+    font-size: 28px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #7b9bff, #4d6bfe 60%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+  }
+  .empty .hint { font-size: 14px; }
+  .suggestions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .suggestion-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    max-width: 220px;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .suggestion-card:hover { background: var(--surface-hover); border-color: var(--accent); }
+
+  /* ---------- Messages ---------- */
+  .msg-row { display: flex; gap: 12px; align-items: flex-start; }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .avatar.bot { background: linear-gradient(135deg, var(--accent), #7b9bff); }
+  .avatar.user { background: var(--surface-hover); }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 78%;
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    border-top-right-radius: 4px;
+  }
+  .bubble.bot {
+    background: transparent;
+    padding-left: 0;
+    max-width: 100%;
+  }
+
+  /* ---------- Rendered markdown content ---------- */
+  .bubble.bot p { margin: 0 0 10px 0; }
+  .bubble.bot p:last-child { margin-bottom: 0; }
+  .bubble.bot strong { color: #fff; font-weight: 600; }
+  .bubble.bot ul, .bubble.bot ol { margin: 8px 0; padding-left: 22px; }
+  .bubble.bot li { margin-bottom: 4px; }
+  .bubble.bot code {
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+
+  .bubble.bot table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 13.5px;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  .bubble.bot th, .bubble.bot td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .bubble.bot th {
+    background: var(--surface);
+    color: #fff;
+    font-weight: 600;
+  }
+  .bubble.bot tr:nth-child(even) td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .sources {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .source-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  .typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+
+  /* ---------- Input area ---------- */
+  .input-area {
+    padding: 14px 24px 22px 24px;
+    flex-shrink: 0;
+  }
+  .input-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 8px 8px 18px;
+    transition: border-color 0.15s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); }
+
+  .input-wrap textarea {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14.5px;
+    resize: none;
+    max-height: 160px;
+    padding: 8px 0;
+    line-height: 1.4;
+  }
+  .input-wrap textarea::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .send-btn:not(:disabled):hover { background: var(--accent-hover); }
+
+  .disclaimer {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 10px;
+  }
+
+  /* scrollbar */
+  .chat-scroll::-webkit-scrollbar { width: 8px; }
+  .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+  #fileInput { display: none; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="dot">🩺</div>
+        <span class="label">MediBot</span>
+      </div>
+      <button class="icon-btn" id="toggleSidebar" title="Toggle sidebar">☰</button>
+    </div>
+
+    <div class="section-label">Knowledge base</div>
+    <div class="upload-zone" id="uploadZone">
+      📄 Drop PDFs here or click to browse
+    </div>
+    <input type="file" id="fileInput" accept=".pdf" multiple>
+    <div id="fileList"></div>
+    <button class="index-btn" id="indexBtn" disabled>Index documents</button>
+
+    <div class="sidebar-footer">
+      LangChain · Groq · Pinecone · FastAPI<br>
+      <span style="opacity:0.7">Portfolio project — not medical advice</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="top-bar">
+      <div class="status"><span class="pulse"></span> RAG pipeline connected</div>
+    </div>
+
+    <div class="chat-scroll" id="chatScroll">
+      <div class="chat-column" id="chatColumn">
+        <div class="empty" id="emptyState">
+          <div class="greeting">Ask MediBot anything</div>
+          <div class="hint">Answers are grounded in the documents you upload — nothing else.</div>
+          <div class="suggestions">
+            <div class="suggestion-card" onclick="askSuggestion(this)">What are the early symptoms of diabetes?</div>
+            <div class="suggestion-card" onclick="askSuggestion(this)">How is diabetes diagnosed?</div>
+            <div class="suggestion-card" onclick="askSuggestion(this)">Summarize the uploaded document</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="userInput" placeholder="Message MediBot..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" disabled>↑</button>
+      </div>
+      <div class="disclaimer">MediBot can make mistakes. Verify important medical information with a professional.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:8000";
+
+  const sidebar = document.getElementById("sidebar");
+  document.getElementById("toggleSidebar").onclick = () => sidebar.classList.toggle("collapsed");
+
+  const uploadZone = document.getElementById("uploadZone");
+  const fileInput = document.getElementById("fileInput");
+  const fileList = document.getElementById("fileList");
+  const indexBtn = document.getElementById("indexBtn");
+  let selectedFiles = [];
+
+  uploadZone.onclick = () => fileInput.click();
+  fileInput.onchange = (e) => {
+    selectedFiles = Array.from(e.target.files);
+    renderFileList();
+  };
+
+  function renderFileList() {
+    fileList.innerHTML = "";
+    selectedFiles.forEach(f => {
+      const chip = document.createElement("div");
+      chip.className = "file-chip";
+      chip.innerHTML = `<span class="name">📄 ${f.name}</span>`;
+      fileList.appendChild(chip);
+    });
+    indexBtn.disabled = selectedFiles.length === 0;
+    indexBtn.textContent = selectedFiles.length ? `Index ${selectedFiles.length} document(s)` : "Index documents";
+  }
+
+  indexBtn.onclick = async () => {
+    if (!selectedFiles.length) return;
+    indexBtn.disabled = true;
+    indexBtn.textContent = "Indexing...";
+
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append("files", f));
+
+    try {
+      const res = await fetch(`${API_URL}/upload_pdfs/`, { method: "POST", body: formData });
+      if (res.ok) {
+        indexBtn.textContent = "✓ Indexed";
+        setTimeout(() => {
+          selectedFiles = [];
+          fileList.innerHTML = "";
+          indexBtn.textContent = "Index documents";
+          indexBtn.disabled = true;
+        }, 1500);
+      } else {
+        indexBtn.textContent = "Failed — retry";
+        indexBtn.disabled = false;
+      }
+    } catch (err) {
+      indexBtn.textContent = "Server unreachable";
+      indexBtn.disabled = false;
+    }
+  };
+
+  // ---------- Chat ----------
+  const chatColumn = document.getElementById("chatColumn");
+  const chatScroll = document.getElementById("chatScroll");
+  const emptyState = document.getElementById("emptyState");
+  const userInput = document.getElementById("userInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  userInput.addEventListener("input", () => {
+    sendBtn.disabled = userInput.value.trim().length === 0;
+    userInput.style.height = "auto";
+    userInput.style.height = Math.min(userInput.scrollHeight, 160) + "px";
+  });
+
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendBtn.onclick = sendMessage;
+
+  function askSuggestion(el) {
+    userInput.value = el.textContent;
+    sendBtn.disabled = false;
+    sendMessage();
+  }
+
+  function scrollToBottom() {
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+
+  function addUserMessage(text) {
+    if (emptyState) emptyState.remove();
+    const row = document.createElement("div");
+    row.className = "msg-row user";
+    row.innerHTML = `
+      <div class="avatar user">🧑‍⚕️</div>
+      <div class="bubble user">${escapeHtml(text)}</div>
+    `;
+    chatColumn.appendChild(row);
+    scrollToBottom();
+  }
+
+  function addBotTyping() {
+    const row = document.createElement("div");
+    row.className = "msg-row bot";
+    row.id = "typingRow";
+    row.innerHTML = `
+      <div class="avatar bot">🩺</div>
+      <div class="bubble bot"><div class="typing"><span></span><span></span><span></span></div></div>
+    `;
+    chatColumn.appendChild(row);
+    scrollToBottom();
+  }
+
+  function addBotMessage(text, sources) {
+    const typingRow = document.getElementById("typingRow");
+    if (typingRow) typingRow.remove();
+
+    const sourcesHtml = (sources && sources.length)
+      ? `<div class="sources">${sources.map(s => `<span class="source-chip">📄 ${escapeHtml(s)}</span>`).join("")}</div>`
+      : "";
+
+    const renderedText = marked.parse(text || "");
+
+    const row = document.createElement("div");
+    row.className = "msg-row bot";
+    row.innerHTML = `
+      <div class="avatar bot">🩺</div>
+      <div class="bubble bot">${renderedText}${sourcesHtml}</div>
+    `;
+    chatColumn.appendChild(row);
+    scrollToBottom();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addUserMessage(text);
+    userInput.value = "";
+    userInput.style.height = "auto";
+    sendBtn.disabled = true;
+    addBotTyping();
+
+    try {
+      const formData = new FormData();
+      formData.append("question", text);
+      const res = await fetch(`${API_URL}/ask/`, { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (res.ok) {
+        const sources = (data.sources || []).filter(s => s && s.trim());
+        addBotMessage(data.response, sources);
+      } else {
+        addBotMessage(`⚠️ Error: ${data.error || "something went wrong."}`, []);
+      }
+    } catch (err) {
+      addBotMessage("⚠️ Couldn't reach the server. Is your FastAPI backend running on port 8000?", []);
+    }
+  }
+</script>
+
+</body>
+</html>

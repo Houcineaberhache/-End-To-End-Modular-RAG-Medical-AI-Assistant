@@ -12,7 +12,7 @@ app=FastAPI(title="Medical Assistant API",description="API for AI Medical Assist
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"]
 )
