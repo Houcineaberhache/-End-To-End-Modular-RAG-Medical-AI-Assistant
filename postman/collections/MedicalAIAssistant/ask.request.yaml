@@ -1,0 +1,18 @@
+$kind: http-request
+name: ask
+url: http://127.0.0.1:8000/ask/
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: question
+      value: what is diabetes?
+      description: ""
+      disabled: true
+    - type: text
+      key: question
+      value: how many types of diabetes are there ?
+      description: ""
+      disabled: false
+order: 1143

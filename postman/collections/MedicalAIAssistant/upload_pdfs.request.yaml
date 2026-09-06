@@ -1,0 +1,14 @@
+$kind: http-request
+name: upload_pdfs
+url: http://127.0.0.1:8000/upload_pdfs/
+method: POST
+body:
+  type: formdata
+  content:
+    - type: file
+      key: files
+      src:
+        - postman-cloud:///1f1a9591-16c4-4dd0-ab9c-b5f9e8ac8ea8
+      description: ""
+      disabled: false
+order: 2000
