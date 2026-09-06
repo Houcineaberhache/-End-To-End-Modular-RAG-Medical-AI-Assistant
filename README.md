@@ -2,6 +2,7 @@
 
 A Retrieval-Augmented Generation (RAG) chatbot that answers medical questions grounded in documents you upload — PDFs, textbooks, clinical notes, or reports. Instead of relying on the LLM's raw memory (and risking hallucinated medical facts), the system retrieves the most relevant chunks from your own documents first, then generates an answer strictly from that context.
 
+🌐 **Live demo:** [medibot.qodeck.app](https://medibot.qodeck.app/)
 
 ---
 
@@ -33,7 +34,7 @@ Query Embedding
     ↓
 Similarity Search → Pinecone → Retrieved Chunks
     ↓
-RAG Chain (LangChain LCEL + Groq LLaMA3-70B)
+RAG Chain (LangChain LCEL + Groq)
     ↓
 Grounded Answer + Source Documents
 ```
@@ -44,12 +45,13 @@ Grounded Answer + Source Documents
 
 | Component        | Technology                          |
 |-------------------|--------------------------------------|
-| LLM               | Groq API — LLaMA3-70B                |
-| Embeddings        | Google Generative AI (`embedding-001`) |
+| LLM               | Groq API — `openai/gpt-oss-120b`     |
+| Embeddings        | Google Generative AI (`gemini-embedding-001`) |
 | Vector Database   | Pinecone                             |
 | Orchestration     | LangChain (LCEL)                     |
 | Backend           | FastAPI                              |
-| Deployment        | Render                               |
+| Frontend          | Custom HTML/CSS/JS chat interface    |
+| Deployment        | Self-hosted VPS                      |
 
 ---
 
@@ -59,13 +61,14 @@ Grounded Answer + Source Documents
 - ✂️ Automatic text extraction and semantic chunking
 - 🧬 Embedding generation via Google Generative AI
 - 🗂️ Vector storage and similarity search via Pinecone
-- 🤖 Context-grounded answers via Groq's LLaMA3-70B
-- 🔗 Source document tracking — every answer links back to its retrieved chunks
+- 🤖 Context-grounded answers via Groq-hosted LLM
+- 🔗 Source document tracking — every answer links back to its retrieved chunks and page number
+- 💬 Clean, modern chat interface with markdown/table rendering and live streaming-style feedback
 - 🌐 FastAPI backend with clean, documented REST endpoints
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Development)
 
 ### 1. Clone the repository
 
@@ -102,7 +105,7 @@ PINECONE_INDEX_NAME=your_pinecone_index_name
 
 > ⚠️ Never commit `.env` — it's already excluded via `.gitignore`.
 
-### 4. Run the server
+### 4. Run the backend
 
 ```bash
 cd server
@@ -110,6 +113,17 @@ uvicorn main:app --reload
 ```
 
 The API will be live at `http://127.0.0.1:8000`. Interactive docs available at `http://127.0.0.1:8000/docs`.
+
+### 5. Run the frontend
+
+The frontend is a single static HTML file with no build step.
+
+```bash
+cd client
+python -m http.server 5500
+```
+
+Then open `http://localhost:5500/index.html` in your browser.
 
 ---
 
@@ -129,7 +143,7 @@ Ask a question grounded in the uploaded documents.
 ```json
 {
   "response": "Answer generated from retrieved context...",
-  "sources": ["source_chunk_1", "source_chunk_2"]
+  "sources": ["uploaded_docs/DIABETES.pdf (page 3)"]
 }
 ```
 
@@ -139,26 +153,20 @@ Ask a question grounded in the uploaded documents.
 
 ```
 ├── assets/                    # Architecture diagrams and sample PDFs
-├── client/                    # Frontend (Streamlit-style client)
-│   ├── components/
-│   │   ├── chatUI.py
-│   │   ├── history_download.py
-│   │   └── upload.py
-│   ├── utils/
-│   │   └── api.py
-│   ├── app.py
-│   └── config.py
+├── client/                    # Frontend chat interface
+│   └── index.html              # Standalone HTML/CSS/JS chat UI
 └── server/                    # FastAPI backend
     ├── middlewares/
     │   └── exception_handlers.py
     ├── modules/
-    │   ├── llm.py              # RAG chain construction (LCEL)
-    │   ├── load_vectorstore.py # Pinecone + embedding setup
-    │   ├── pdf_handlers.py     # PDF loading and chunking
-    │   └── query_handlers.py   # Chain invocation logic
+    │   ├── llm.py               # RAG chain construction (LCEL)
+    │   ├── load_vectrostore.py  # Pinecone + embedding setup
+    │   ├── pdf_handlers.py      # PDF loading and chunking
+    │   └── query_handlers.py    # Chain invocation logic
     ├── routes/
     │   ├── ask_question.py
     │   └── upload_pdfs.py
+    ├── Dockerfile
     ├── logger.py
     ├── main.py
     └── requirements.txt
@@ -169,8 +177,9 @@ Ask a question grounded in the uploaded documents.
 ## 🛠️ Notes on Implementation
 
 - Built on **LangChain 1.x**, using **LCEL (LangChain Expression Language)** pipelines rather than the deprecated `RetrievalQA` chain — retrieval, prompting, generation, and output parsing are each explicit, composable steps.
-- All API keys and secrets are loaded via `.env` and never hardcoded.
-- Logging is handled through a centralized logger (`loguru`-style formatting) across all modules for easier debugging of the retrieval and generation pipeline.
+- All API keys and secrets are loaded via `.env` / server environment variables and never hardcoded.
+- Logging is handled through a centralized logger across all modules for easier debugging of the retrieval and generation pipeline.
+- Deployed on a self-managed VPS for full control over uptime, resources, and no cold-start delays.
 
 ---
 
@@ -178,8 +187,8 @@ Ask a question grounded in the uploaded documents.
 
 - [ ] Add conversation memory for multi-turn follow-up questions
 - [ ] Support additional file types (DOCX, TXT)
-- [ ] Add citation highlighting in the UI (show exact source passage)
-- [ ] Deploy client + server together with a live demo link
+- [ ] Add streaming token-by-token responses
+- [ ] Add lightweight API rate-limiting / auth for public access
 - [ ] Add automated tests for the retrieval and generation pipeline
 
 ---
@@ -193,4 +202,4 @@ This project is a **learning/portfolio application** and is **not intended for r
 ## 👤 Author
 
 Built by **Houcine** as part of a hands-on AI/RAG engineering portfolio.
-Follow the build process: **[@houcine.dev](https://instagram.com/houcine.ai)** — *Decode Data*
+Follow the build process: **[@__houcine.ai]((https://www.instagram.com/__houcine.ai/))** — *Decode Data*
